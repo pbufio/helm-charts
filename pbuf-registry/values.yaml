@@ -39,14 +39,25 @@ service:
   type: ClusterIP
   http:
     port: 8080
+    auth:
+      enabled: false
+      type: ""
   grpc:
-    port: 8081
+    port: 6777
+    tls:
+      enabled: false
+    auth:
+      enabled: false
+      type: ""
   debug:
     port: 8082
 
 secrets:
   create: true
   databaseDSN: ""
+  staticToken: ""
+  grpcTlsCert: ""
+  grpcTlsKey: ""
 
   # use external secrets operator for production usage
   eso:
@@ -54,6 +65,9 @@ secrets:
     secretStoreRefName: ""
     remoteRefKey: ""
     databaseDSNProperty: ""
+    serverStaticTokenProperty: ""
+    serverGrpcTlsCertFileProperty: ""
+    serverGrpcTlsKeyFileProperty: ""
 
 ingress:
   enabled: false

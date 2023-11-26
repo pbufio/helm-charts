@@ -15,4 +15,16 @@ spec:
       remoteRef:
         key: {{ .Values.secrets.eso.remoteRefKey }}
         property: {{ .Values.secrets.eso.databaseDSNProperty }}
+    - secretKey: SERVER_STATIC_TOKEN
+      remoteRef:
+        key: {{ .Values.secrets.eso.remoteRefKey }}
+        property: {{ .Values.secrets.eso.serverStaticTokenProperty }}
+    - secretKey: server-cert.pem
+      remoteRef:
+        key: {{ .Values.secrets.eso.remoteRefKey }}
+        property: {{ .Values.secrets.eso.serverGrpcTlsCertFileProperty }}
+    - secretKey: server-key.pem
+      remoteRef:
+        key: {{ .Values.secrets.eso.remoteRefKey }}
+        property: {{ .Values.secrets.eso.serverGrpcTlsKeyFileProperty }}
 {{- end }}
