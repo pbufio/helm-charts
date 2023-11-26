@@ -46,12 +46,31 @@ spec:
                 secretKeyRef:
                   name: {{ include "pbuf-registry.fullname" . }}
                   key: DATA_DATABASE_DSN
+            - name: SERVER_STATIC_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "pbuf-registry.fullname" . }}
+                  key: SERVER_STATIC_TOKEN
+            - name: SERVER_GRPC_TLS_ENABLED
+              value: "{{ .Values.service.grpc.tls.enabled }}"
+            - name: SERVER_GRPC_TLS_CERTFILE
+              value: /app/certs/server-cert.pem
+            - name: SERVER_GRPC_TLS_KEYFILE
+              value: /app/certs/server-key.pem
+            - name: SERVER_GRPC_AUTH_ENABLED
+              value: "{{ .Values.service.grpc.auth.enabled }}"
+            - name: SERVER_GRPC_AUTH_TYPE
+              value: "{{ .Values.service.grpc.auth.type }}"
+            - name: SERVER_HTTP_AUTH_ENABLED
+              value: "{{ .Values.service.http.auth.enabled }}"
+            - name: SERVER_HTTP_AUTH_TYPE
+              value: "{{ .Values.service.http.auth.type }}"
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
             - name: grpc
-              containerPort: 8081
+              containerPort: 6777
               protocol: TCP
             - name: debug
               containerPort: 8082
@@ -66,6 +85,15 @@ spec:
               port: debug
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /app/certs/server-cert.pem
+              name: secret
+              readOnly: true
+              subPath: server-cert.pem
+            - mountPath: /app/certs/server-key.pem
+              name: secret
+              readOnly: true
+              subPath: server-key.pem
       {{- with .Values.customSidecarContainers }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -81,3 +109,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      - name: secret
+        secret:
+          secretName: {{ include "pbuf-registry.fullname" . }}
