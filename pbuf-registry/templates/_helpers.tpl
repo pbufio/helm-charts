@@ -60,3 +60,48 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Environment variables helper
+*/}}
+{{- define "pbuf-registry.env" -}}
+- name: DATA_DATABASE_DSN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "pbuf-registry.fullname" . }}
+      key: DATA_DATABASE_DSN
+- name: SERVER_STATIC_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "pbuf-registry.fullname" . }}
+      key: SERVER_STATIC_TOKEN
+- name: SERVER_GRPC_TLS_ENABLED
+  value: "{{ .Values.service.grpc.tls.enabled }}"
+- name: SERVER_GRPC_TLS_CERTFILE
+  value: /app/certs/server-cert.pem
+- name: SERVER_GRPC_TLS_KEYFILE
+  value: /app/certs/server-key.pem
+- name: SERVER_GRPC_AUTH_ENABLED
+  value: "{{ .Values.service.grpc.auth.enabled }}"
+- name: SERVER_GRPC_AUTH_TYPE
+  value: "{{ .Values.service.grpc.auth.type }}"
+- name: SERVER_HTTP_AUTH_ENABLED
+  value: "{{ .Values.service.http.auth.enabled }}"
+- name: SERVER_HTTP_AUTH_TYPE
+  value: "{{ .Values.service.http.auth.type }}"
+{{- end }}
+
+{{/*
+Volume mounts
+*/}}
+{{- define "pbuf-registry.volumeMounts" -}}
+- mountPath: /app/certs/server-cert.pem
+  name: secret
+  readOnly: true
+  subPath: server-cert.pem
+- mountPath: /app/certs/server-key.pem
+  name: secret
+  readOnly: true
+  subPath: server-key.pem
+{{- end }}
