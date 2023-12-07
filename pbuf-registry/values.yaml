@@ -111,7 +111,8 @@ background:
     # requests:
     #   cpu: 100m
     #   memory: 128Mi
-    command: /app/pbuf-registry
+    command:
+      - /app/pbuf-registry
     args:
       - compaction
   protoparser:
@@ -123,6 +124,7 @@ background:
     # requests:
     #   cpu: 100m
     #   memory: 128Mi
-    command: /app/pbuf-registry
+    command:
+      - /app/pbuf-registry
     args:
       - proto-parsing

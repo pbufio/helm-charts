@@ -51,8 +51,10 @@ spec:
             {{- toYaml $.Values.securityContext | nindent 12 }}
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
-          command: {{ $spec.command }}
-          args: {{ $spec.args }}
+          command:
+            {{- toYaml $spec.command | nindent 12 }}
+          args:
+            {{- toYaml $spec.args | nindent 12 }}
           env:
             {{- include "pbuf-registry.env" $ | nindent 12 }}
           ports:
