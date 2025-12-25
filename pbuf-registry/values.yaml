@@ -89,7 +89,7 @@ postgresql:
   # PostgreSQL configuration
   primary:
     persistence:
-      enabled: true
+      enabled: false
       storageClass: ""
       size: 8Gi
 

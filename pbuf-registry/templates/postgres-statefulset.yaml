@@ -52,7 +52,11 @@ spec:
             - name: POSTGRES_DB
               value: {{ .Values.postgresql.auth.database | quote }}
             - name: PGDATA
+              {{- if .Values.postgresql.primary.persistence.enabled }}
               value: /var/lib/postgresql/data/pgdata
+              {{- else }}
+              value: /var/lib/postgresql/data
+              {{- end }}
           ports:
             - name: postgresql
               containerPort: 5432
