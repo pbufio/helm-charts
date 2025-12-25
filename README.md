@@ -121,9 +121,33 @@ helm install my-pbuf-registry pbuf/pbuf-registry \
   --set secrets.staticToken=your-token-here
 ```
 
+## Local Development
+
+### Helm Linting
+
+To run Helm lint checks locally (matching CI configuration):
+
+```shell
+./scripts/lint.sh
+```
+
+This script will:
+- Run `helm lint` on the chart
+- Run `ct lint` (chart-testing) to validate the chart structure
+- Ensure your changes pass the same checks as CI
+
+**Prerequisites:**
+- [Helm](https://helm.sh/docs/intro/install/) v3+
+- [chart-testing (ct)](https://github.com/helm/chart-testing) - Install via `brew install chart-testing` (macOS) or from releases
+
 ## E2E Testing
 
-This chart includes comprehensive end-to-end tests using Kind (Kubernetes in Docker). See [tests/e2e/README.md](tests/e2e/README.md) for detailed instructions.
+This chart includes comprehensive end-to-end tests using Kind (Kubernetes in Docker). The tests include:
+- Helm chart deployment and health checks
+- Internal and external PostgreSQL configurations
+- **pbuf CLI functional testing** - Register, push, and vendor protobuf modules
+
+See [tests/e2e/README.md](tests/e2e/README.md) for detailed instructions.
 
 ### Quick Start
 

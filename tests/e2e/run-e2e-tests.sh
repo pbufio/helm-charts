@@ -14,7 +14,8 @@ NAMESPACE="${NAMESPACE:-default}"
 RELEASE_NAME="${RELEASE_NAME:-pbuf-registry-test}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CHART_DIR="${SCRIPT_DIR}/../../pbuf-registry"
-TIMEOUT="${TIMEOUT:-300}"
+TIMEOUT="${TIMEOUT:-600}"
+PORT_FORWARD_PID=""
 
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -30,6 +31,11 @@ log_error() {
 
 cleanup() {
     if [ "${SKIP_CLEANUP:-false}" != "true" ]; then
+        if [ -n "${PORT_FORWARD_PID:-}" ]; then
+              log_info "Stopping port forwarding..."
+              kill "${PORT_FORWARD_PID}" 2>/dev/null || true
+        fi
+
         log_info "Cleaning up resources..."
         helm uninstall "${RELEASE_NAME}" -n "${NAMESPACE}" 2>/dev/null || true
         kubectl delete namespace "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
@@ -42,6 +48,8 @@ cleanup() {
         log_warn "Skipping cleanup (SKIP_CLEANUP=true)"
     fi
 }
+
+trap cleanup EXIT
 
 wait_for_pods() {
     local label=$1
@@ -65,9 +73,6 @@ wait_for_statefulset() {
         -n "${namespace}" \
         --timeout="${timeout}s" || return 1
 }
-
-# Trap cleanup on exit
-trap cleanup EXIT
 
 # Check prerequisites
 log_info "Checking prerequisites..."
@@ -172,6 +177,112 @@ for job in compaction protoparser; do
         log_warn "Background job '${job}' pod not found (might be disabled)"
     fi
 done
+
+# Install pbuf CLI for functional testing
+log_info "Installing pbuf CLI..."
+PBUF_CLI_VERSION="${PBUF_CLI_VERSION:-latest}"
+PBUF_INSTALL_DIR="${SCRIPT_DIR}/bin"
+mkdir -p "${PBUF_INSTALL_DIR}"
+
+if [ ! -f "${PBUF_INSTALL_DIR}/pbuf" ]; then
+    log_info "Downloading pbuf CLI..."
+    if [ "$(uname)" = "Darwin" ]; then
+        PBUF_OS="darwin"
+    else
+        PBUF_OS="linux"
+    fi
+    PBUF_ARCH="$(uname -m)"
+    if [ "${PBUF_ARCH}" = "x86_64" ]; then
+        PBUF_ARCH="amd64"
+    elif [ "${PBUF_ARCH}" = "aarch64" ]; then
+        PBUF_ARCH="arm64"
+    fi
+    
+    # Get the latest version if not specified
+    if [ "${PBUF_CLI_VERSION}" = "latest" ]; then
+        PBUF_CLI_VERSION=$(curl -s "https://api.github.com/repos/pbufio/pbuf-cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        if [ -z "${PBUF_CLI_VERSION}" ]; then
+            log_error "Failed to fetch latest pbuf CLI version"
+            exit 1
+        fi
+        log_info "Latest pbuf CLI version: ${PBUF_CLI_VERSION}"
+    fi
+    
+    # Download from releases
+    PBUF_DOWNLOAD_URL="https://github.com/pbufio/pbuf-cli/releases/download/v${PBUF_CLI_VERSION}/pbuf_${PBUF_CLI_VERSION}_${PBUF_OS}_${PBUF_ARCH}.tar.gz"
+    curl -fsSL "${PBUF_DOWNLOAD_URL}" | tar -xz -C "${PBUF_INSTALL_DIR}"
+    chmod +x "${PBUF_INSTALL_DIR}/pbuf"
+else
+    log_info "pbuf CLI already installed"
+fi
+
+PBUF="${PBUF_INSTALL_DIR}/pbuf"
+
+# Set up port forwarding for registry access
+log_info "Setting up port forwarding for registry access..."
+kubectl port-forward -n "${NAMESPACE}" "svc/${RELEASE_NAME}" 6777:6777 &
+PORT_FORWARD_PID=$!
+sleep 5  # Give port-forward time to establish
+
+# Test pbuf CLI functionality
+log_info "Testing pbuf CLI functionality..."
+
+# Copy example module to a temporary directory
+TEMP_MODULE_DIR=$(mktemp -d)
+cp -r "${SCRIPT_DIR}/example-module"/* "${TEMP_MODULE_DIR}/"
+cd "${TEMP_MODULE_DIR}"
+
+# Register the module
+log_info "Registering test module..."
+"${PBUF}" modules register || {
+    log_error "Failed to register module"
+    exit 1
+}
+log_info "Module registered successfully"
+
+# Push the module
+log_info "Pushing test module v1.0.0..."
+"${PBUF}" modules push v1.0.0 || {
+    log_error "Failed to push module"
+    exit 1
+}
+log_info "Module pushed successfully"
+
+# Get module information
+log_info "Getting module information..."
+"${PBUF}" modules get test-org/hello-proto || {
+    log_error "Failed to get module information"
+    exit 1
+}
+log_info "Module information retrieved successfully"
+
+# Test vendoring in a consumer project
+log_info "Testing module vendoring..."
+CONSUMER_DIR=$(mktemp -d)
+cd "${CONSUMER_DIR}"
+
+cat > pbuf.yaml <<EOF
+version: v1
+name: test-org/consumer
+registry:
+  addr: localhost:6777
+  insecure: true
+modules:
+  - name: test-org/hello-proto
+    tag: v1.0.0
+EOF
+
+"${PBUF}" vendor || {
+    log_error "Failed to vendor module"
+    exit 1
+}
+log_info "Module vendored successfully"
+
+# Clean up temporary directories
+cd "${SCRIPT_DIR}"
+rm -rf "${TEMP_MODULE_DIR}" "${CONSUMER_DIR}"
+
+log_info "${GREEN}All pbuf CLI tests passed!${NC}"
 
 # Test with external database configuration
 log_info "Testing with external database configuration..."

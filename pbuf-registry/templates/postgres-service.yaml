@@ -4,7 +4,9 @@ kind: Service
 metadata:
   name: {{ include "pbuf-registry.fullname" . }}-postgresql
   labels:
-    {{- include "pbuf-registry.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    app.kubernetes.io/name: {{ include "pbuf-registry.name" $ }}-postgresql
+    app.kubernetes.io/instance: {{ $.Release.Name }}
     app.kubernetes.io/component: database
 spec:
   type: ClusterIP
@@ -15,6 +17,6 @@ spec:
       targetPort: postgresql
       protocol: TCP
   selector:
-    {{- include "pbuf-registry.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "pbuf-registry.name" $ }}-postgresql
     app.kubernetes.io/component: database
 {{- end }}

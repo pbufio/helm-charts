@@ -4,19 +4,29 @@ kind: StatefulSet
 metadata:
   name: {{ include "pbuf-registry.fullname" . }}-postgresql
   labels:
-    {{- include "pbuf-registry.labels" . | nindent 4 }}
+    helm.sh/chart: {{ include "pbuf-registry.chart" $ }}
+    {{- if $.Chart.AppVersion }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    app.kubernetes.io/name: {{ include "pbuf-registry.name" $ }}-postgresql
+    app.kubernetes.io/instance: {{ $.Release.Name }}
     app.kubernetes.io/component: database
 spec:
   serviceName: {{ include "pbuf-registry.fullname" . }}-postgresql
   replicas: 1
   selector:
     matchLabels:
-      {{- include "pbuf-registry.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/managed-by: {{ $.Release.Service }}
+      app.kubernetes.io/name: {{ include "pbuf-registry.name" $ }}-postgresql
+      app.kubernetes.io/instance: {{ $.Release.Name }}
       app.kubernetes.io/component: database
   template:
     metadata:
       labels:
-        {{- include "pbuf-registry.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/managed-by: {{ $.Release.Service }}
+        app.kubernetes.io/name: {{ include "pbuf-registry.name" $ }}-postgresql
+        app.kubernetes.io/instance: {{ $.Release.Name }}
         app.kubernetes.io/component: database
     spec:
       {{- with .Values.postgresql.primary.podSecurityContext }}

@@ -108,6 +108,15 @@ The e2e test suite covers:
 - Verifying connection to existing PostgreSQL instance
 - Testing production-like setup
 
+### 4. pbuf CLI Functional Testing
+- Automatic installation of pbuf CLI
+- Module registration via `pbuf modules register`
+- Module publishing via `pbuf modules push`
+- Module retrieval via `pbuf modules get`
+- Module vendoring in consumer projects via `pbuf vendor`
+- Verification of vendored proto files
+- End-to-end workflow validation
+
 ## Architecture
 
 ### Kind Cluster Configuration
@@ -157,8 +166,11 @@ The PostgreSQL deployment follows best practices:
 ## Files
 
 - `kind-config.yaml` - Kind cluster configuration
-- `run-e2e-tests.sh` - Main test script
+- `run-e2e-tests.sh` - Main test script with pbuf CLI functional tests
 - `postgres.yaml` - Standalone PostgreSQL deployment for testing
+- `example-module/` - Example protobuf module for functional testing
+  - `pbuf.yaml` - Module configuration
+  - `hello-proto/` - Example proto files (greeter.proto, types.proto)
 - `README.md` - This file
 
 ## Troubleshooting
