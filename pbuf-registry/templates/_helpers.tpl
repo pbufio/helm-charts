@@ -61,6 +61,13 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{/*
+Generate PostgreSQL DSN for internal database
+*/}}
+{{- define "pbuf-registry.postgresql.dsn" -}}
+{{- printf "postgres://%s:%s@%s-postgresql:5432/%s?sslmode=disable" .Values.postgresql.auth.username .Values.postgresql.auth.password (include "pbuf-registry.fullname" .) .Values.postgresql.auth.database }}
+{{- end }}
+
 
 {{/*
 Environment variables helper
@@ -96,6 +103,7 @@ Environment variables helper
 Volume mounts
 */}}
 {{- define "pbuf-registry.volumeMounts" -}}
+{{- if .Values.service.grpc.tls.enabled }}
 - mountPath: /app/certs/server-cert.pem
   name: secret
   readOnly: true
@@ -104,4 +112,5 @@ Volume mounts
   name: secret
   readOnly: true
   subPath: server-key.pem
+{{- end }}
 {{- end }}

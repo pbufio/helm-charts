@@ -1,0 +1,72 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+    paths-ignore:
+      - '**/**.md'
+      - 'LICENSE'
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - '**/**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.13.0
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: pbuf-registry-e2e
+          config: tests/e2e/kind-config.yaml
+          wait: 120s
+
+      - name: Verify cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Run E2E tests
+        run: |
+          cd tests/e2e
+          ./run-e2e-tests.sh
+        env:
+          SKIP_CLUSTER_DELETE: "true"
+          CLUSTER_NAME: pbuf-registry-e2e
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== Cluster Info ==="
+          kubectl cluster-info || true
+          echo "=== Pods ==="
+          kubectl get pods --all-namespaces || true
+          echo "=== Pod Descriptions ==="
+          kubectl describe pods --all-namespaces || true
+          echo "=== Pod Logs ==="
+          kubectl logs -l app.kubernetes.io/name=pbuf-registry --all-containers=true --tail=100 || true
+          echo "=== StatefulSets ==="
+          kubectl get statefulsets --all-namespaces || true
+          echo "=== Services ==="
+          kubectl get services --all-namespaces || true
+          echo "=== Events ==="
+          kubectl get events --all-namespaces --sort-by='.lastTimestamp' || true

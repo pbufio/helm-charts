@@ -1,4 +1,4 @@
-name: Release Charts
+name: Lint Chart
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - 'LICENSE'
 
 jobs:
-  release:
+  lint-chart:
     permissions:
       contents: write
     runs-on: ubuntu-latest
