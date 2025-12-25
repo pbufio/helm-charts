@@ -1,5 +1,6 @@
 # Create background deployments helm template with 1 replica
 {{- range $name, $spec := $.Values.background }}
+{{- if $spec.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -92,4 +93,5 @@ spec:
         - name: secret
           secret:
             secretName: {{ include "pbuf-registry.fullname" $ }}
+{{- end }}
   {{- end }}

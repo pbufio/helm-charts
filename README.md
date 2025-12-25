@@ -5,7 +5,7 @@ Helm Charts for PBUF projects
 
 # pbuf-registry
 
-This Helm chart installs the `pbuf-registry` in a Kubernetes cluster. The application relies on a PostgreSQL database, which should be configured separately and provided to the application through a DSN.
+This Helm chart installs the `pbuf-registry` in a Kubernetes cluster. The application relies on a PostgreSQL database, which can be deployed internally for development/testing or configured to use an external database for production.
 
 ## Prerequisites
 
@@ -85,6 +85,54 @@ The following table lists the configurable parameters of the `pbuf-registry` cha
 | `background.protoparser.resources`          | CPU/Memory resource requests/limits for background proto parsing                                                          | `{}`                                                                                                |
 | `background.protoparser.command`            | Command to run for background proto parsing                                                                               | `/app/pbuf-registry`                                                                                |
 | `background.protoparser.args`               | Arguments to pass to the background proto parsing command                                                                 | `["proto-parsing"]`                                                                                 |
+| `postgresql.enabled`                        | Enable internal PostgreSQL deployment (for dev/test, disable for production)                                              | `true`                                                                                              |
+| `postgresql.image.repository`               | PostgreSQL image repository                                                                                               | `postgres`                                                                                          |
+| `postgresql.image.tag`                      | PostgreSQL image tag                                                                                                      | `18.1-alpine3.21`                                                                                   |
+| `postgresql.image.pullPolicy`               | PostgreSQL image pull policy                                                                                              | `IfNotPresent`                                                                                      |
+| `postgresql.auth.username`                  | PostgreSQL username                                                                                                       | `pbuf`                                                                                              |
+| `postgresql.auth.password`                  | PostgreSQL password                                                                                                       | `pbuf`                                                                                              |
+| `postgresql.auth.database`                  | PostgreSQL database name                                                                                                  | `pbuf_registry`                                                                                     |
+| `postgresql.primary.persistence.enabled`    | Enable PostgreSQL persistent volume                                                                                       | `true`                                                                                              |
+| `postgresql.primary.persistence.storageClass` | PostgreSQL persistent volume storage class                                                                              | `""`                                                                                                |
+| `postgresql.primary.persistence.size`       | PostgreSQL persistent volume size                                                                                         | `8Gi`                                                                                               |
+| `postgresql.primary.resources`              | CPU/Memory resource requests/limits for PostgreSQL                                                                        | `{}`                                                                                                |
+
+## Database Configuration
+
+### Internal PostgreSQL (Development/Testing)
+
+For development and testing, you can deploy PostgreSQL as part of the chart:
+
+```shell
+helm install my-pbuf-registry pbuf/pbuf-registry \
+  --set postgresql.enabled=true \
+  --set postgresql.primary.persistence.enabled=true \
+  --set secrets.staticToken=your-token-here
+```
+
+### External PostgreSQL (Production)
+
+For production, disable internal PostgreSQL and provide an external database DSN:
+
+```shell
+helm install my-pbuf-registry pbuf/pbuf-registry \
+  --set postgresql.enabled=false \
+  --set secrets.databaseDSN="postgres://user:password@host:5432/database?sslmode=require" \
+  --set secrets.staticToken=your-token-here
+```
+
+## E2E Testing
+
+This chart includes comprehensive end-to-end tests using Kind (Kubernetes in Docker). See [tests/e2e/README.md](tests/e2e/README.md) for detailed instructions.
+
+### Quick Start
+
+```shell
+cd tests/e2e
+./run-e2e-tests.sh
+```
+
+The e2e tests automatically run in CI/CD via GitHub Actions on pull requests and pushes to main.
 
 ## Uninstalling the Chart
 To uninstall/delete the my-pbuf-registry deployment:

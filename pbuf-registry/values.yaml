@@ -69,6 +69,61 @@ secrets:
     serverGrpcTlsCertFileProperty: ""
     serverGrpcTlsKeyFileProperty: ""
 
+postgresql:
+  # Enable internal PostgreSQL deployment (for development/testing)
+  # In production, set enabled: false and provide external database via secrets.databaseDSN
+  enabled: true
+  
+  # PostgreSQL image configuration
+  image:
+    repository: postgres
+    tag: "18.1-alpine3.21"
+    pullPolicy: IfNotPresent
+  
+  # Authentication
+  auth:
+    username: pbuf
+    password: pbuf
+    database: pbuf_registry
+  
+  # PostgreSQL configuration
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 8Gi
+    
+    resources: {}
+      # limits:
+      #   cpu: 1000m
+      #   memory: 1Gi
+      # requests:
+      #   cpu: 250m
+      #   memory: 256Mi
+    
+    podSecurityContext:
+      fsGroup: 999
+    
+    securityContext:
+      runAsUser: 999
+      runAsNonRoot: true
+    
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+      successThreshold: 1
+
 ingress:
   enabled: false
   className: ""
