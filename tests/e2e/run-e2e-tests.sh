@@ -14,7 +14,7 @@ NAMESPACE="${NAMESPACE:-default}"
 RELEASE_NAME="${RELEASE_NAME:-pbuf-registry-test}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CHART_DIR="${SCRIPT_DIR}/../../pbuf-registry"
-TIMEOUT="${TIMEOUT:-600}"
+TIMEOUT="${TIMEOUT:-180}"
 PORT_FORWARD_PID=""
 
 log_info() {

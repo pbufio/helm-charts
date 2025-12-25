@@ -87,9 +87,11 @@ spec:
             failureThreshold: {{ .Values.postgresql.primary.readinessProbe.failureThreshold }}
             successThreshold: {{ .Values.postgresql.primary.readinessProbe.successThreshold }}
           {{- end }}
+          {{- if .Values.postgresql.primary.persistence.enabled }}
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+          {{- end }}
           {{- with .Values.postgresql.primary.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
