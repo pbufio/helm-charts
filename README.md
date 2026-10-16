@@ -1,3 +1,13 @@
+> [!IMPORTANT]
+> **This repository has been archived and consolidated into the [`pbufio/pbuf-registry`](https://github.com/pbufio/pbuf-registry) monorepo.**
+>
+> - **Chart Source**: [`charts/pbuf-registry/`](https://github.com/pbufio/pbuf-registry/tree/main/charts/pbuf-registry)
+> - **Chart Documentation**: [`charts/pbuf-registry/README.md`](https://github.com/pbufio/pbuf-registry/blob/main/charts/pbuf-registry/README.md)
+> - **OCI Registry**: `helm install my-pbuf-registry oci://ghcr.io/pbufio/charts/pbuf-registry`
+> - **Helm Repo**: `helm repo add pbuf https://pbufio.github.io/pbuf-registry`
+
+---
+
 # helm-charts
 Helm Charts for PBUF projects
 
